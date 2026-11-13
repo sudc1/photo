@@ -2,7 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1f5fbf">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>흐린 사진 선명화·보정 도구</title>
 <style>
   :root{
@@ -72,13 +75,70 @@
   .modelst b.ok{color:var(--ok)} .modelst b.no{color:var(--danger)}
   footer.lic{font-size:11px;color:var(--sub);line-height:1.6;margin-top:6px}
   select{font:inherit;padding:4px}
+  .btn,.levels label,.mtabs button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .mtabs{display:none}
+  .sizesel{display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0}
+  .sizesel select{flex:1}
+  #shareAllBtn{margin-top:8px}
+
+  /* ================= 모바일 ================= */
+  @media (max-width: 900px){
+    body{font-size:15px;padding-bottom:env(safe-area-inset-bottom)}
+    header{padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+    header h1{font-size:16px}
+    header .ver{display:none}
+    header #hdrInfo{display:block;max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+    header{flex:none}
+    .layout{display:flex;flex-direction:column;flex:1;min-height:0;height:auto}
+    aside{order:1;flex:none;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;display:flex;gap:8px;align-items:center;overflow-x:auto}
+    .drop{margin:0;padding:10px 14px;white-space:nowrap;flex:0 0 auto;font-size:14px;border-width:1.5px}
+    .flist{display:flex;gap:6px;flex:0 0 auto}
+    .flist li{white-space:nowrap;border:1px solid var(--line);max-width:150px;overflow:hidden;text-overflow:ellipsis;padding:8px 10px;display:block;font-size:13px}
+    .flist li .st{margin-left:4px}
+    main{order:2;flex:none;background:#2b2f36}
+    .toolbar{padding:6px 10px;gap:10px;flex-wrap:nowrap}
+    .toolbar label{white-space:nowrap}
+    #zoomBtn{min-height:36px;padding:6px 10px;font-size:13px;white-space:nowrap}
+    .toolbar label:nth-child(2){flex:1}
+    .toolbar input[type=range]{width:auto;flex:1}
+    .toolbar > span[style]{display:none}
+    .stage{height:38dvh;flex:none;padding:6px}
+    .stage:not(.zoom) .inner canvas{max-height:calc(38dvh - 12px)}
+    .stage:not(.zoom) .inner{touch-action:none}
+    .empty{font-size:14px;padding:0 20px}
+    .side{order:3;flex:1;min-height:0;border-left:0;padding:0 12px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .mtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;position:sticky;top:0;z-index:4;background:var(--bg);padding:8px 0;margin:0 -12px 8px;padding-left:12px;padding-right:12px;border-bottom:1px solid var(--line)}
+    .mtabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 0;font:inherit;font-size:14px;color:var(--sub)}
+    .mtabs button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+    .side section.card{display:none;background:var(--panel)}
+    .side section.card.on{display:block}
+    .btn{min-height:44px;padding:10px 14px;font-size:15px}
+    section.card h2 .btn{min-height:36px}
+    .row{grid-template-columns:72px 1fr 48px;margin:12px 0;font-size:14px}
+    input[type=range]{height:30px}
+    input[type=checkbox]{width:20px;height:20px}
+    .levels label{padding:12px 2px;font-size:14px}
+    .lvdesc,.note{font-size:13px}
+    .btns .btn{flex:1}
+    footer.lic{padding:0 2px}
+  }
+  @media (max-width: 900px) and (orientation: landscape){
+    body{overflow:auto;height:auto;display:block}
+    .layout{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;height:calc(100dvh - 44px)}
+    aside{grid-column:1;grid-row:1}
+    main{grid-column:1;grid-row:2;display:flex;flex-direction:column}
+    .stage{height:auto;flex:1}
+    .stage:not(.zoom) .inner canvas{max-height:calc(100dvh - 160px)}
+    .side{grid-column:2;grid-row:1 / span 2}
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>흐린 사진 선명화·보정 도구</h1><span class="ver">v1.0 · 사진은 이 PC 밖으로 전송되지 않습니다</span>
+  <h1>흐린 사진 선명화·보정 도구</h1><span class="ver">v1.0 · 사진은 이 기기 밖으로 전송되지 않습니다</span>
   <span class="spacer"></span>
-  <span id="hdrInfo" class="ver"></span>
+  <span id="hdrInfo" class="ver" style="display:block"></span>
 </header>
 
 <div class="layout">
@@ -92,13 +152,13 @@
   <!-- 가운데: 미리보기 -->
   <main>
     <div class="toolbar">
-      <label><input type="checkbox" id="cmpOn" checked> 보정 전·후 비교</label>
-      <label>비교 위치 <input type="range" id="split" min="0" max="100" value="50"></label>
+      <label><input type="checkbox" id="cmpOn" checked> <span class="pcOnly">보정 전·후 </span>비교</label>
+      <label><span class="pcOnly">비교 위치</span> <input type="range" id="split" min="0" max="100" value="50"></label>
       <span style="flex:1"></span>
       <button class="btn" id="zoomBtn">100% 확대 보기</button>
     </div>
     <div id="stage" class="stage">
-      <div id="empty" class="empty">왼쪽에서 사진을 불러오세요.<br>선명화 → 기본 보정 → 저장 순서로 진행합니다.</div>
+      <div id="empty" class="empty"><span class="pcOnly">왼쪽에서 </span>사진을 불러오세요.<br>선명화 → 기본 보정 → 저장 순서로 진행합니다.</div>
       <div id="inner" class="inner hidden">
         <canvas id="cvAfter"></canvas>
         <canvas id="cvBefore"></canvas>
@@ -111,7 +171,13 @@
 
   <!-- 오른쪽: 설정 -->
   <div class="side">
-    <section class="card">
+    <nav class="mtabs" id="mtabs">
+      <button data-t="sharp" class="on">① 선명화</button>
+      <button data-t="tone">② 보정</button>
+      <button data-t="save">③ 저장</button>
+      <button data-t="diag">진단</button>
+    </nav>
+    <section class="card" data-tab="diag">
       <h2>자동 진단</h2>
       <table class="diag">
         <tr><td>해상도</td><td id="dSize">-</td></tr>
@@ -122,8 +188,16 @@
       <div class="note info" style="margin-bottom:0">선명도 점수는 윤곽 변화량(라플라시안 분산)으로, 같은 사진의 전·후 비교용입니다. AI 복원 결과는 디테일을 새로 생성하므로 점수만으로 판단하지 마십시오.</div>
     </section>
 
-    <section class="card">
+    <section class="card on" data-tab="sharp">
       <h2><span class="num">1</span>선명화 단계</h2>
+      <div class="sizesel"><span>처리 크기</span>
+        <select id="procSize">
+          <option value="0">원본 크기</option>
+          <option value="4000">긴 변 4000px</option>
+          <option value="3000">긴 변 3000px (휴대폰 권장)</option>
+          <option value="2000">긴 변 2000px (빠름)</option>
+        </select>
+      </div>
       <div class="levels">
         <label><input type="radio" name="lv" value="0" checked><span>없음</span></label>
         <label><input type="radio" name="lv" value="1"><span>레벨 1</span></label>
@@ -143,12 +217,14 @@
       </div>
       <div id="p3" class="hidden">
         <div class="modelst">AI 모델: <span id="mState"><b class="no">불러오지 않음</b></span></div>
-        <button class="btn full" id="mLoadBtn">AI 모델 파일 선택 (gfpgan_fp16w.onnx)</button>
+        <button class="btn primary full hidden" id="mDlBtn">AI 모델 내려받기 (170MB · 와이파이 권장)</button>
+        <button class="btn full" id="mLoadBtn" style="margin-top:6px">AI 모델 파일 직접 선택 (gfpgan_fp16w.onnx)</button>
         <input id="mFile" type="file" accept=".onnx" class="hidden">
         <div class="row" style="margin-top:10px"><span>AI 강도</span><input type="range" id="l3W" min="0" max="100" step="5" value="80"><span class="v" id="l3WV"></span></div>
         <label style="font-size:12.5px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="l3Bg" checked> 얼굴 외 배경에 레벨 2 함께 적용</label>
         <div class="note warn"><b>주의:</b> AI가 눈·치아·주름 등을 추정해서 새로 그립니다. 원본 정보가 복원되는 것이 아니므로 <b>공식 기록·결과보고용 사진에는 레벨 2까지만</b> 사용하십시오. 홍보물에 쓸 때는 원본을 따로 보관하십시오. 저장 파일명에는 "_AI보정"이 자동으로 붙습니다.</div>
-        <div class="note info">최초 1회 인터넷 연결이 필요합니다(AI 실행 라이브러리 다운로드). 사진은 전송되지 않습니다.</div>
+        <div class="note info">최초 1회 인터넷 연결이 필요합니다(AI 실행 라이브러리·모델 다운로드). 이후에는 이 기기에 보관된 모델을 사용합니다. 사진은 전송되지 않습니다.</div>
+        <div class="note warn mobileOnly">휴대폰은 메모리가 부족하면 페이지가 새로 고쳐질 수 있습니다. 이 경우 처리 크기를 2000px로 줄이거나 PC를 사용하십시오.</div>
       </div>
 
       <button class="btn primary full" id="runBtn" disabled>선명화 실행</button>
@@ -156,7 +232,7 @@
       <div class="status" id="status"></div>
     </section>
 
-    <section class="card">
+    <section class="card" data-tab="tone">
       <h2><span class="num">2</span>기본 보정 <span style="flex:1"></span><button class="btn" id="autoBtn" style="padding:3px 10px;font-size:12px">자동 보정</button><button class="btn" id="resetBtn" style="padding:3px 10px;font-size:12px">초기화</button></h2>
       <div class="row"><span>노출</span><input type="range" id="tExp" min="-100" max="100" value="0"><span class="v" id="tExpV"></span></div>
       <div class="row"><span>밝기</span><input type="range" id="tBri" min="-50" max="50" value="0"><span class="v" id="tBriV"></span></div>
@@ -167,14 +243,15 @@
       <div class="lvdesc" style="margin-top:6px">색온도: (−)푸르게 / (+)따뜻하게 · 틴트: (−)초록 / (+)자홍. 자동 보정은 화이트밸런스를 70% 적용합니다.</div>
     </section>
 
-    <section class="card">
+    <section class="card" data-tab="save">
       <h2><span class="num">3</span>저장</h2>
       <div class="row" style="grid-template-columns:78px 1fr 44px"><span>JPG 품질</span><input type="range" id="q" min="70" max="100" value="92"><span class="v" id="qV"></span></div>
       <div class="btns">
         <button class="btn primary" id="saveBtn" disabled>이 사진 저장</button>
         <button class="btn" id="batchBtn" disabled>전체 일괄 저장</button>
       </div>
-      <div class="lvdesc" style="margin-top:8px">원본 해상도로 저장합니다. 원본 파일은 변경되지 않습니다. 촬영 정보(EXIF)는 저장되지 않습니다. 일괄 저장 시 브라우저가 "여러 파일 다운로드 허용"을 물으면 허용하십시오.</div>
+      <button class="btn primary full hidden" id="shareAllBtn"></button>
+      <div class="lvdesc" style="margin-top:8px">"처리 크기"로 설정한 해상도로 저장합니다. 원본 파일은 변경되지 않습니다. 촬영 정보(EXIF)는 저장되지 않습니다. <span id="saveHelp"></span></div>
     </section>
 
     <footer class="lic">
@@ -192,6 +269,22 @@ const RETINA_B64 = "CAgSB3B5dG9yY2gaBjIuMTUuMDrw6GkK4gEKBWlucHV0Cg5vbm54OjpDb252
 const FACE_TEMPLATE = [[192.98138,239.94708],[318.90277,240.1936],[256.63416,314.01935],[201.26117,371.41043],[313.08905,371.15118]];
 
 const $ = id => document.getElementById(id);
+const IS_MOBILE = matchMedia('(pointer:coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const IS_HTTP = /^https?:/.test(location.protocol);
+// 모델 분할 파일(웹 서버에 올렸을 때 자동 내려받기). 파일 크기는 빌드 시 채워짐
+const MODEL_PARTS = [{"url": "models/gfpgan_fp16w.part0", "size": 20000000}, {"url": "models/gfpgan_fp16w.part1", "size": 20000000}, {"url": "models/gfpgan_fp16w.part2", "size": 20000000}, {"url": "models/gfpgan_fp16w.part3", "size": 20000000}, {"url": "models/gfpgan_fp16w.part4", "size": 20000000}, {"url": "models/gfpgan_fp16w.part5", "size": 20000000}, {"url": "models/gfpgan_fp16w.part6", "size": 20000000}, {"url": "models/gfpgan_fp16w.part7", "size": 20000000}, {"url": "models/gfpgan_fp16w.part8", "size": 10341321}];
+const MAX_PIXELS = IS_MOBILE ? 16000000 : 60000000; // 휴대폰 브라우저 캔버스 한도 대비
+document.querySelectorAll('.mobileOnly').forEach(e=>{ if(!IS_MOBILE) e.remove(); });
+if(IS_MOBILE){ document.querySelectorAll('.pcOnly').forEach(e=>e.remove()); $('drop').innerHTML='<b>＋ 사진 선택</b>'; $('zoomBtn').textContent='확대'; }
+$('procSize').value = IS_MOBILE ? '3000' : '0';
+$('saveHelp').textContent = IS_MOBILE ? '휴대폰에서는 공유 창이 열리면 "이미지 저장"(갤러리·사진 앱)을 누르십시오.' : '일괄 저장 시 브라우저가 "여러 파일 다운로드 허용"을 물으면 허용하십시오.';
+if(IS_HTTP && MODEL_PARTS.length) $('mDlBtn').classList.remove('hidden');
+// 모바일 탭
+document.querySelectorAll('#mtabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#mtabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.side section.card').forEach(c=>c.classList.toggle('on',c.dataset.tab===b.dataset.t));
+});
+function gotoTab(t){ if(!IS_MOBILE) return; const b=document.querySelector(`#mtabs button[data-t="${t}"]`); b&&b.click(); }
 const LV_DESC = {
   0:'선명화를 하지 않고 밝기·색 보정만 합니다.',
   1:'언샤프 마스크: 윤곽을 강조합니다. 즉시 처리되며 효과는 약합니다. 과하면 테두리에 흰 띠가 생깁니다.',
@@ -265,18 +358,29 @@ function renderList(){
 }
 function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
+let lastResized=false;
 async function loadImageData(file){
   const bmp = await createImageBitmap(file, {imageOrientation:'from-image'});
-  const c=document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
-  const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(bmp,0,0); bmp.close&&bmp.close();
-  return {canvas:c, data:ctx.getImageData(0,0,c.width,c.height)};
+  const lim=+$('procSize').value; let sc=1;
+  if(lim) sc=Math.min(1, lim/Math.max(bmp.width,bmp.height));
+  sc=Math.min(sc, Math.sqrt(MAX_PIXELS/(bmp.width*bmp.height)));
+  const w=Math.round(bmp.width*sc), h=Math.round(bmp.height*sc);
+  lastResized = sc<1;
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.imageSmoothingQuality='high'; ctx.drawImage(bmp,0,0,w,h);
+  const info={ow:bmp.width, oh:bmp.height}; bmp.close&&bmp.close();
+  return {canvas:c, data:ctx.getImageData(0,0,w,h), info};
 }
+$('procSize').onchange=()=>{ if(S.cur>=0 && !busy) selectFile(S.cur); };
 
 async function selectFile(i){
   if(busy) return;
   S.cur=i; renderList();
   setStatus('사진을 불러오는 중…');
-  const {canvas,data}=await loadImageData(S.files[i].file);
+  let canvas,data,info;
+  try{ ({canvas,data,info}=await loadImageData(S.files[i].file)); }
+  catch(e){ console.error(e); setStatus('사진을 열 수 없습니다. 처리 크기를 줄여 다시 시도하십시오. ('+(e.message||e)+')'); return; }
+  S.origInfo=info;
   S.origCanvas=canvas; S.orig=data; S.sharp=null; S.sharpLevel=0;
   const cvB=$('cvBefore'), cvA=$('cvAfter');
   cvB.width=cvA.width=data.width; cvB.height=cvA.height=data.height;
@@ -299,7 +403,7 @@ function updateSplit(){
   document.querySelectorAll('.tag').forEach(t=>t.style.display=on?'':'none');
 }
 $('split').oninput=updateSplit; $('cmpOn').onchange=updateSplit;
-$('zoomBtn').onclick=()=>{ S.zoom=!S.zoom; $('stage').classList.toggle('zoom',S.zoom); $('zoomBtn').textContent=S.zoom?'화면 맞춤 보기':'100% 확대 보기'; };
+$('zoomBtn').onclick=()=>{ S.zoom=!S.zoom; $('stage').classList.toggle('zoom',S.zoom); $('zoomBtn').textContent=IS_MOBILE?(S.zoom?'맞춤':'확대'):(S.zoom?'화면 맞춤 보기':'100% 확대 보기'); };
 // 미리보기 위에서 드래그로 비교 위치 조절
 (function(){
   const inner=$('inner'); let drag=false;
@@ -358,7 +462,8 @@ function sharpScore(img){
 }
 let beforeScore=0;
 function diagnose(){
-  const img=S.orig; $('dSize').textContent=`${img.width} × ${img.height}px`;
+  const img=S.orig; const oi=S.origInfo;
+  $('dSize').textContent = (oi && (oi.ow!==img.width)) ? `${img.width} × ${img.height}px (원본 ${oi.ow} × ${oi.oh})` : `${img.width} × ${img.height}px`;
   beforeScore=sharpScore(img);
   const m=channelMeans(img); const luma=(0.299*m[0]+0.587*m[1]+0.114*m[2])/255;
   $('dBright').textContent=`${Math.round(luma*100)}%` + (luma<0.3?' (어두움)':luma>0.7?' (밝음)':'');
@@ -462,11 +567,30 @@ async function ensureGfpgan(){
       S.ai.session=await ort.InferenceSession.create(bytes,{executionProviders:ep, graphOptimizationLevel:'all'}); S.ai.ep=ep[0]; break; }
     catch(e){ lastErr=e; console.warn('EP 실패',ep,e); }
   }
-  if(!S.ai.session) throw lastErr||new Error('AI 모델을 실행할 수 없습니다.');
+  if(!S.ai.session) throw lastErr||new Error('AI 모델을 실행할 수 없습니다. 휴대폰이라면 메모리가 부족할 수 있습니다.');
+  S.ai.modelBuf=null; // 메모리 절약(기기 저장소에 사본 보관)
   updateModelState();
 }
 
-// 모델 파일 선택 + 이 PC 브라우저 저장소(IndexedDB) 보관
+// 웹 서버에 올린 경우: 분할 모델 자동 내려받기
+$('mDlBtn').onclick=async()=>{
+  if(busy) return; setBusy(true); $('mDlBtn').disabled=true;
+  try{
+    const total=MODEL_PARTS.reduce((a,p)=>a+p.size,0); const buf=new Uint8Array(total); let off=0;
+    for(let k=0;k<MODEL_PARTS.length;k++){
+      const res=await fetch(MODEL_PARTS[k].url); if(!res.ok) throw new Error('모델 파일을 받지 못했습니다 ('+res.status+')');
+      const rd=res.body.getReader();
+      for(;;){ const {done,value}=await rd.read(); if(done) break; buf.set(value,off); off+=value.length; setProg(off/total); setStatus(`AI 모델 내려받는 중… ${(off/1048576).toFixed(0)} / ${(total/1048576).toFixed(0)}MB`); }
+    }
+    if(off!==total) throw new Error('모델 파일 크기가 맞지 않습니다. 다시 시도하십시오.');
+    S.ai.modelBuf=buf.buffer; S.ai.session=null; updateModelState();
+    setStatus('AI 모델 준비 완료. 이 기기에 보관하는 중…');
+    Promise.race([idbPut('gfpgan',S.ai.modelBuf), sleep(60000).then(()=>false)]).then(ok=>{
+      if(!busy) setStatus(ok?'AI 모델 준비 완료. 이 기기에 보관했으므로 다음부터는 다시 받지 않습니다.':'AI 모델 준비 완료. (기기 저장 공간 문제로 보관하지 못해 다음에 다시 받아야 합니다)'); });
+  }catch(e){ console.error(e); setStatus('오류: '+(e.message||e)); setProg(0); }
+  finally{ setBusy(false); $('mDlBtn').disabled=false; }
+};
+// 모델 파일 선택 + 이 기기 브라우저 저장소(IndexedDB) 보관
 $('mLoadBtn').onclick=()=>$('mFile').click();
 $('mFile').onchange=async e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -476,12 +600,12 @@ $('mFile').onchange=async e=>{
 };
 function updateModelState(){
   $('mState').innerHTML = S.ai.session ? `<b class="ok">준비됨</b> (${S.ai.ep==='webgpu'?'그래픽카드 가속':'CPU 처리'})`
-    : S.ai.modelBuf ? `<b class="ok">불러옴</b> (${(S.ai.modelBuf.byteLength/1048576).toFixed(0)}MB, 첫 실행 시 준비)` : '<b class="no">불러오지 않음</b>';
+    : S.ai.modelBuf ? `<b class="ok">준비됨</b> (${(S.ai.modelBuf.byteLength/1048576).toFixed(0)}MB, 첫 실행 시 준비)` : '<b class="no">불러오지 않음</b>';
 }
 function idbOpen(){ return new Promise((res,rej)=>{ const r=indexedDB.open('photo-sharpen',1); r.onupgradeneeded=()=>r.result.createObjectStore('m'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbPut(k,v){ try{ const db=await idbOpen(); await new Promise((res,rej)=>{ const t=db.transaction('m','readwrite'); t.objectStore('m').put(v,k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); return true; }catch(e){ console.warn('IndexedDB 저장 실패',e); return false; } }
 async function idbGet(k){ try{ const db=await idbOpen(); return await new Promise((res,rej)=>{ const t=db.transaction('m','readonly'); const r=t.objectStore('m').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }catch(e){ return null; } }
-idbGet('gfpgan').then(b=>{ if(b && !S.ai.modelBuf){ S.ai.modelBuf=b; updateModelState(); } });
+idbGet('gfpgan').then(b=>{ if(b && !S.ai.modelBuf && !S.ai.session){ S.ai.modelBuf=b; updateModelState(); $('mDlBtn').textContent='AI 모델 다시 내려받기'; } });
 
 // RetinaFace 후처리
 function priors(h,w){
@@ -581,28 +705,52 @@ $('runBtn').onclick=async()=>{
 
 // ====================== 저장 ======================
 function outName(name,lv){ const base=name.replace(/\.[^.]+$/,''); return `${base}_${lv===3?'AI보정':'보정'}.jpg`; }
-function download(canvas,name){
-  return new Promise(res=>canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); res(); },'image/jpeg',+$('q').value/100));
+function toBlob(canvas){ return new Promise(res=>canvas.toBlob(res,'image/jpeg',+$('q').value/100)); }
+function canShareFiles(files){ try{ return IS_MOBILE && navigator.canShare && navigator.canShare({files}); }catch(e){ return false; } }
+function downloadBlob(b,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),10000); }
+// 반환값: 'shared' | 'downloaded' | 'cancel'
+async function saveFiles(files){
+  if(canShareFiles(files)){
+    try{ await navigator.share({files}); return 'shared'; }
+    catch(e){ if(e.name==='AbortError') return 'cancel'; console.warn('공유 실패, 다운로드로 전환',e); }
+  }
+  for(const f of files){ downloadBlob(f,f.name); await sleep(300); }
+  return 'downloaded';
 }
+async function download(canvas,name){ const b=await toBlob(canvas); return saveFiles([new File([b],name,{type:'image/jpeg'})]); }
 $('saveBtn').onclick=async()=>{
   if(!S.orig) return; render();
-  await download($('cvAfter'), outName(S.files[S.cur].name,S.sharpLevel));
-  S.files[S.cur].done=true; renderList(); setStatus('저장했습니다 (다운로드 폴더).');
+  const r=await download($('cvAfter'), outName(S.files[S.cur].name,S.sharpLevel));
+  if(r==='cancel'){ setStatus('저장을 취소했습니다.'); return; }
+  S.files[S.cur].done=true; renderList(); setStatus(r==='shared'?'공유 창으로 보냈습니다.':'저장했습니다 (다운로드 폴더).');
+};
+let pending=[];
+$('shareAllBtn').onclick=async()=>{
+  if(!pending.length) return;
+  const r=await saveFiles(pending);
+  if(r==='cancel'){ setStatus('저장을 취소했습니다. 다시 누르면 됩니다.'); return; }
+  const names=new Set(pending.map(f=>f.name)); S.files.forEach(f=>{ if([...names].some(n=>n.startsWith(f.name.replace(/\.[^.]+$/,'')+'_'))) f.done=true; });
+  pending=[]; $('shareAllBtn').classList.add('hidden'); renderList(); setStatus('저장했습니다.');
 };
 $('batchBtn').onclick=async()=>{
   if(busy||!S.files.length) return;
-  const lv=level(); setBusy(true);
+  const lv=level(); setBusy(true); pending=[]; $('shareAllBtn').classList.add('hidden');
   try{
     for(let i=0;i<S.files.length;i++){
       setStatus(`일괄 처리 ${i+1}/${S.files.length}: ${S.files[i].name}`); setProg(i/S.files.length); await sleep(20);
       const {canvas,data}=await loadImageData(S.files[i].file);
-      S.orig=data; S.origCanvas=canvas;
+      S.orig=data; S.origCanvas=canvas; S.sharp=null;
       const r=await computeSharp(lv,()=>{});
       const out=applyTone(r.img||data,toneParams());
       const c=document.createElement('canvas'); c.width=out.width; c.height=out.height; c.getContext('2d').putImageData(out,0,0);
-      await download(c,outName(S.files[i].name,lv)); S.files[i].done=true; renderList(); await sleep(300);
+      const f=new File([await toBlob(c)],outName(S.files[i].name,lv),{type:'image/jpeg'});
+      if(IS_MOBILE && navigator.canShare){ pending.push(f); }
+      else { await saveFiles([f]); S.files[i].done=true; renderList(); }
+      await sleep(200);
     }
-    setProg(1); setStatus(`일괄 저장 완료: ${S.files.length}장`);
+    setProg(1);
+    if(pending.length){ const b=$('shareAllBtn'); b.textContent=`처리한 ${pending.length}장 한 번에 저장·공유`; b.classList.remove('hidden'); setStatus('처리 완료. 아래 버튼을 눌러 저장하십시오.'); gotoTab('save'); }
+    else setStatus(`일괄 저장 완료: ${S.files.length}장`);
   }catch(e){ console.error(e); setStatus('오류: '+(e.message||e)); }
   finally{ setBusy(false); const k=S.cur; S.cur=-1; busy=false; if(k>=0) await selectFile(k); }
 };
